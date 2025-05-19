@@ -1,88 +1,69 @@
-@extends('layouts.app')
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>ユーザー新規登録画面</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            text-align: center;
+            padding-top: 80px;
+        }
 
-@section('content')
-<div class="container">
-    <h2 class="text-center">ユーザー新規登録画面</h2>
+        h1 {
+            font-size: 28px;
+            margin-bottom: 40px;
+        }
 
-    <form method="POST" action="{{ route('register') }}" class="register-form">
+        input[type="email"],
+        input[type="password"] {
+            width: 400px;
+            padding: 15px;
+            font-size: 18px;
+            margin: 15px auto;
+            display: block;
+            border: 1px solid #aaa;
+            border-radius: 4px;
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-top: 30px;
+        }
+
+        .register-btn,
+        .back-btn {
+            padding: 12px 40px;
+            font-size: 18px;
+            border: 1px solid #000;
+            border-radius: 25px;
+            cursor: pointer;
+        }
+
+        .register-btn {
+            background-color: orange;
+        }
+
+        .back-btn {
+            background-color: aqua;
+        }
+    </style>
+</head>
+<body>
+    <h1>ユーザー新規登録画面</h1>
+
+    <form method="POST" action="{{ route('register') }}">
         @csrf
 
-        <div class="form-group">
-            <label for="name">名前</label>
-            <input id="name" type="text" class="@error('name') is-invalid @enderror" name="name" value="{{ old('name') }}" required>
-            @error('name')
-                <span class="error-message">{{ $message }}</span>
-            @enderror
-        </div>
+        <input type="password" name="password" placeholder="パスワード" required>
+        <input type="email" name="email" placeholder="アドレス" required>
 
-        <div class="form-group">
-            <label for="email">メールアドレス</label>
-            <input id="email" type="email" class="@error('email') is-invalid @enderror" name="email" value="{{ old('email') }}" required>
-            @error('email')
-                <span class="error-message">{{ $message }}</span>
-            @enderror
-        </div>
-
-        <div class="form-group">
-            <label for="password">パスワード</label>
-            <input id="password" type="password" class="@error('password') is-invalid @enderror" name="password" required>
-            @error('password')
-                <span class="error-message">{{ $message }}</span>
-            @enderror
-        </div>
-
-        <div class="form-group">
-            <label for="password-confirm">パスワード確認</label>
-            <input id="password-confirm" type="password" name="password_confirmation" required>
-        </div>
-
-        <div class="button-group">
+        <div class="button-container">
             <button type="submit" class="register-btn">新規登録</button>
-            <a href="{{ route('login') }}" class="back-btn">戻る</a>
+            <button type="button" onclick="history.back()" class="back-btn">戻る</button>
         </div>
     </form>
-</div>
-
-<style>
-    .container {
-        text-align: center;
-        max-width: 400px;
-        margin: auto;
-    }
-    .form-group {
-        margin-bottom: 15px;
-    }
-    input {
-        width: 100%;
-        padding: 10px;
-        border: 1px solid #ccc;
-        border-radius: 5px;
-    }
-    .error-message {
-        color: red;
-        font-size: 0.9em;
-    }
-    .button-group {
-        display: flex;
-        justify-content: space-between;
-    }
-    .register-btn {
-        background-color: orange;
-        color: white;
-        padding: 10px 20px;
-        border: none;
-        border-radius: 20px;
-        cursor: pointer;
-    }
-    .back-btn {
-        background-color: skyblue;
-        color: white;
-        padding: 10px 20px;
-        border: none;
-        border-radius: 20px;
-        text-decoration: none;
-        display: inline-block;
-        text-align: center;
-    }
-</style>
-@endsection
+</body>
+</html>

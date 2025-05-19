@@ -2,8 +2,9 @@
 
 namespace Database\Seeders;
 
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use App\Models\User;
+use App\Models\Company;
 
 class DatabaseSeeder extends Seeder
 {
@@ -14,11 +15,20 @@ class DatabaseSeeder extends Seeder
      */
     public function run()
     {
-        // \App\Models\User::factory(10)->create();
+        // テスト用ユーザーを重複チェックつきで作成
+        if (!User::where('email', 'test@example.com')->exists()) {
+            User::create([
+                'name' => 'Test User',
+                'email' => 'test@example.com',
+                'password' => bcrypt('password'),
+            ]);
+        }
 
-        // \App\Models\User::factory()->create([
-        //     'name' => 'Test User',
-        //     'email' => 'test@example.com',
-        // ]);
+        // メーカー情報を重複チェックつきで追加
+        $companies = ['Coca-Cola', 'サントリー', 'キリン'];
+
+        foreach ($companies as $companyName) {
+            Company::firstOrCreate(['name' => $companyName]);
+        }
     }
 }

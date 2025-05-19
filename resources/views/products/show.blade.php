@@ -1,58 +1,59 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container">
-    <h2>商品情報詳細画面</h2>
+<div class="container mx-auto px-4 py-8">
+    <h2 class="text-2xl font-bold mb-6">商品情報詳細画面</h2>
 
-    <div class="card p-4">
-        <table class="table">
-            <tr>
-                <th>ID</th>
-                <td>{{ $product->id }}</td>
+    <div class="border border-gray-400 p-8 max-w-2xl mx-auto rounded-lg shadow">
+        <table class="table-auto w-full text-base">
+            <tr class="align-top">
+                <th class="text-left font-semibold w-32">ID</th>
+                <td><em>{{ $product->id }}</em></td>
             </tr>
-            <tr>
-                <th>商品画像</th>
+            <tr class="align-top">
+                <th class="text-left font-semibold">商品画像</th>
                 <td>
                     @if ($product->image)
-                        <img src="{{ asset('storage/' . $product->image) }}" alt="商品画像" width="150">
+                        <img src="{{ asset('storage/' . $product->image) }}" alt="商品画像" class="w-40 border p-1">
                     @else
                         画像なし
                     @endif
                 </td>
             </tr>
             <tr>
-                <th>商品名</th>
+                <th class="text-left font-semibold">商品名</th>
                 <td>{{ $product->name }}</td>
             </tr>
             <tr>
-                <th>メーカー</th>
+                <th class="text-left font-semibold">メーカー</th>
                 <td>{{ $product->company->name }}</td>
             </tr>
             <tr>
-                <th>価格</th>
+                <th class="text-left font-semibold">価格</th>
                 <td>¥{{ number_format($product->price) }}</td>
             </tr>
             <tr>
-                <th>在庫数</th>
+                <th class="text-left font-semibold">在庫数</th>
                 <td>{{ $product->stock }}</td>
             </tr>
-            <tr>
-                <th>コメント</th>
-                <td>{{ $product->comment ?? 'なし' }}</td>
+            <tr class="align-top">
+                <th class="text-left font-semibold">コメント</th>
+                <td>
+                    <textarea rows="3" class="border rounded p-2 w-full bg-gray-100" readonly>{{ $product->comment ?? 'なし' }}</textarea>
+                </td>
             </tr>
         </table>
 
-        <div class="mt-3">
-            <!-- 編集ボタン -->
-            <a href="{{ route('products.edit', $product->id) }}" class="btn btn-warning">編集</a>
-
-            <!-- 戻るボタン -->
-            <a href="{{ route('products.index') }}" class="btn btn-primary">戻る</a>
+        <div class="mt-8 flex justify-center space-x-4">
+            <a href="{{ route('products.edit', $product->id) }}"
+               class="bg-orange-500 hover:bg-orange-600 text-white px-5 py-2 rounded">
+                編集
+            </a>
+            <a href="{{ route('products.index') }}"
+               class="bg-blue-500 hover:bg-blue-600 text-white px-5 py-2 rounded">
+                戻る
+            </a>
         </div>
     </div>
 </div>
 @endsection
-
-
-Route::get('/products/{id}', [ProductController::class, 'show'])->name('products.show');
-

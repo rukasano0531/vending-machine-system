@@ -1,23 +1,85 @@
-@extends('layouts.app')
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>ユーザーログイン画面</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            text-align: center;
+            padding: 100px;
+        }
 
-@section('content')
-<div style="text-align: center; margin-top: 50px;">
-    <h2>ユーザーログイン画面</h2>
+        h1 {
+            font-size: 30px;
+        }
+
+        .form-group {
+            margin: 20px 0;
+        }
+
+        input[type="email"],
+        input[type="password"] {
+            width: 300px;
+            height: 40px;
+            font-size: 16px;
+            padding: 0 10px;
+        }
+
+        .btn {
+            border: none;
+            font-size: 18px;
+            padding: 10px 30px;
+            border-radius: 25px;
+            margin: 0 10px;
+            cursor: pointer;
+        }
+
+        .btn-login {
+            background-color: #89f0ff;
+        }
+
+        .btn-register {
+            background-color: #f79433;
+        }
+
+        .error-messages {
+            color: red;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>ユーザーログイン画面</h1>
+
+    {{-- エラーメッセージ表示 --}}
+    @if ($errors->any())
+        <div class="error-messages">
+            @foreach ($errors->all() as $error)
+                <p>{{ $error }}</p>
+            @endforeach
+        </div>
+    @endif
+
     <form method="POST" action="{{ route('login') }}">
         @csrf
 
-        <div>
-            <input type="email" name="email" placeholder="アドレス" required style="display: block; width: 300px; margin: 10px auto; padding: 10px;">
+        <div class="form-group">
+            <label for="email">アドレス</label><br>
+            <input type="email" id="email" name="email" value="{{ old('email') }}" required autofocus>
         </div>
 
-        <div>
-            <input type="password" name="password" placeholder="パスワード" required style="display: block; width: 300px; margin: 10px auto; padding: 10px;">
+        <div class="form-group">
+            <label for="password">パスワード</label><br>
+            <input type="password" id="password" name="password" required>
         </div>
 
-        <div style="display: flex; justify-content: center; gap: 20px;">
-            <button type="submit" style="background-color: skyblue; padding: 10px 20px; border-radius: 20px;">ログイン</button>
-            <a href="{{ route('register') }}" style="background-color: orange; padding: 10px 20px; border-radius: 20px; text-decoration: none; color: black;">新規登録</a>
+        <div class="form-group">
+            <a href="{{ route('register') }}">
+                <button type="button" class="btn btn-register">新規登録</button>
+            </a>
+            <button type="submit" class="btn btn-login">ログイン</button>
         </div>
     </form>
-</div>
-@endsection
+</body>
+</html>
