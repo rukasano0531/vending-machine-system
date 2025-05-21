@@ -9,28 +9,27 @@ use App\Models\Company;
 class ProductController extends Controller
 {
     /**
-     * 一覧表示
+     * 商品一覧表示（検索対応）
      */
     public function index(Request $request)
     {
-        // 検索条件
-        $searchKeyword   = $request->input('keyword');
-        $selectedCompany = $request->input('company_id');
+        $searchKeyword   = $request->input('keyword');       // 商品名キーワード
+        $selectedCompany = $request->input('company_id');    // メーカーID
 
-        // クエリ組み立て
         $query = Product::with('company');
+
+        // 商品名の部分一致
         if (!empty($searchKeyword)) {
             $query->where('name', 'like', "%{$searchKeyword}%");
         }
+
+        // メーカーの絞り込み
         if (!empty($selectedCompany)) {
             $query->where('company_id', $selectedCompany);
         }
 
-        // ページネーション
         $products = $query->paginate(10)->appends($request->except('page'));
-
-        // メーカー一覧
-        $companies = Company::all();
+        $companies = Company::all(); // 検索用メーカーリスト
 
         return view('products.index', compact(
             'products', 'companies', 'searchKeyword', 'selectedCompany'
@@ -38,7 +37,7 @@ class ProductController extends Controller
     }
 
     /**
-     * 新規登録フォーム表示
+     * 商品登録フォーム表示
      */
     public function create()
     {
@@ -47,11 +46,10 @@ class ProductController extends Controller
     }
 
     /**
-     * 新規登録処理
+     * 商品登録処理
      */
     public function store(Request $request)
     {
-        // バリデーション
         $validated = $request->validate([
             'name'       => 'required|string|max:255',
             'company_id' => 'required|exists:companies,id',
@@ -61,22 +59,19 @@ class ProductController extends Controller
             'image'      => 'nullable|image|max:2048',
         ]);
 
-        // 画像アップロード
         if ($request->hasFile('image')) {
             $path = $request->file('image')->store('products', 'public');
             $validated['image'] = $path;
         }
 
-        // 登録
         Product::create($validated);
 
-        return redirect()
-            ->route('products.index')
-            ->with('success', '商品を登録しました。');
+        return redirect()->route('products.index')
+                         ->with('success', '商品を登録しました。');
     }
 
     /**
-     * 詳細表示
+     * 商品詳細表示
      */
     public function show($id)
     {
@@ -85,7 +80,7 @@ class ProductController extends Controller
     }
 
     /**
-     * 編集フォーム表示
+     * 商品編集フォーム表示
      */
     public function edit($id)
     {
@@ -95,7 +90,7 @@ class ProductController extends Controller
     }
 
     /**
-     * 更新処理
+     * 商品更新処理
      */
     public function update(Request $request, $id)
     {
@@ -117,20 +112,18 @@ class ProductController extends Controller
 
         $product->update($validated);
 
-        return redirect()
-            ->route('products.index')
-            ->with('success', '商品を更新しました。');
+        return redirect()->route('products.index')
+                         ->with('success', '商品を更新しました。');
     }
 
     /**
-     * 削除処理
+     * 商品削除処理
      */
     public function destroy($id)
     {
         Product::findOrFail($id)->delete();
 
-        return redirect()
-            ->route('products.index')
-            ->with('success', '商品を削除しました。');
+        return redirect()->route('products.index')
+                         ->with('success', '商品を削除しました。');
     }
 }
