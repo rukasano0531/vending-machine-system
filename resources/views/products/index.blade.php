@@ -4,6 +4,39 @@
 <div class="container mx-auto px-4 py-6">
     <h2 class="text-2xl font-bold mb-4">商品一覧</h2>
 
+    {{-- 検索フォーム --}}
+    <form method="GET" action="{{ route('products.index') }}" class="flex flex-wrap md:flex-nowrap items-center gap-4 mb-6">
+        {{-- 商品名（部分一致） --}}
+        <input
+            type="text"
+            name="keyword"
+            value="{{ old('keyword', $searchKeyword) }}"
+            placeholder="商品名で検索"
+            class="border border-gray-300 rounded px-3 py-1 w-full md:w-1/3"
+        >
+
+        {{-- メーカーセレクトボックス --}}
+        <select
+            name="company_id"
+            class="border border-gray-300 rounded px-3 py-1 w-full md:w-1/4"
+        >
+            <option value="">すべてのメーカー</option>
+            @foreach ($companies as $company)
+                <option value="{{ $company->id }}" {{ $selectedCompany == $company->id ? 'selected' : '' }}>
+                    {{ $company->name }}
+                </option>
+            @endforeach
+        </select>
+
+        {{-- 検索ボタン --}}
+        <button
+            type="submit"
+            class="bg-gray-700 hover:bg-gray-800 text-white px-4 py-1 rounded text-sm"
+        >
+            検索
+        </button>
+    </form>
+
     {{-- 新規登録ボタン --}}
     <div class="flex justify-end mb-4">
         <a
@@ -77,6 +110,11 @@
                 @endforeach
             </tbody>
         </table>
+    </div>
+
+    {{-- ページネーション（必要に応じて） --}}
+    <div class="mt-6">
+        {{ $products->links() }}
     </div>
 </div>
 @endsection
