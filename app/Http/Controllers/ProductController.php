@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use App\Models\Product;
 use App\Models\Company;
 
@@ -13,26 +14,37 @@ class ProductController extends Controller
      */
     public function index(Request $request)
     {
-        $searchKeyword   = $request->input('keyword');       // 商品名キーワード
-        $selectedCompany = $request->input('company_id');    // メーカーID
+        $searchKeyword   = $request->input('keyword');
+        $selectedCompany = $request->input('company_id');
+        $priceMin        = $request->input('price_min');
+        $priceMax        = $request->input('price_max');
+        $stockMin        = $request->input('stock_min');
+        $stockMax        = $request->input('stock_max');
 
-        $query = Product::with('company');
+        $products = Product::search(
+            $searchKeyword,
+            $selectedCompany,
+            $priceMin,
+            $priceMax,
+            $stockMin,
+            $stockMax
+        )->paginate(10)->appends($request->except('page'));
 
-        // 商品名の部分一致
-        if (!empty($searchKeyword)) {
-            $query->where('name', 'like', "%{$searchKeyword}%");
+        if ($products->isEmpty()) {
+            \Session::flash('error', config('message.not_found'));
         }
 
-        // メーカーの絞り込み
-        if (!empty($selectedCompany)) {
-            $query->where('company_id', $selectedCompany);
-        }
-
-        $products = $query->paginate(10)->appends($request->except('page'));
-        $companies = Company::all(); // 検索用メーカーリスト
+        $companies = Company::all();
 
         return view('products.index', compact(
-            'products', 'companies', 'searchKeyword', 'selectedCompany'
+            'products',
+            'companies',
+            'searchKeyword',
+            'selectedCompany',
+            'priceMin',
+            'priceMax',
+            'stockMin',
+            'stockMax'
         ));
     }
 
@@ -59,15 +71,25 @@ class ProductController extends Controller
             'image'      => 'nullable|image|max:2048',
         ]);
 
-        if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('products', 'public');
-            $validated['image'] = $path;
+        try {
+            DB::beginTransaction();
+
+            if ($request->hasFile('image')) {
+                $path = $request->file('image')->store('products', 'public');
+                $validated['image'] = $path;
+            }
+
+            Product::create($validated);
+
+            DB::commit();
+            return redirect()->route('products.index')
+                             ->with('success', config('message.create_success'));
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->route('products.index')
+                             ->with('error', config('message.create_error') ?? '商品登録に失敗しました。');
         }
-
-        Product::create($validated);
-
-        return redirect()->route('products.index')
-                         ->with('success', '商品を登録しました。');
     }
 
     /**
@@ -103,17 +125,27 @@ class ProductController extends Controller
             'image'      => 'nullable|image|max:2048',
         ]);
 
-        $product = Product::findOrFail($id);
+        try {
+            DB::beginTransaction();
 
-        if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('products', 'public');
-            $validated['image'] = $path;
+            $product = Product::findOrFail($id);
+
+            if ($request->hasFile('image')) {
+                $path = $request->file('image')->store('products', 'public');
+                $validated['image'] = $path;
+            }
+
+            $product->update($validated);
+
+            DB::commit();
+            return redirect()->route('products.index')
+                             ->with('success', config('message.update_success'));
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->route('products.index')
+                             ->with('error', config('message.update_error') ?? '商品更新に失敗しました。');
         }
-
-        $product->update($validated);
-
-        return redirect()->route('products.index')
-                         ->with('success', '商品を更新しました。');
     }
 
     /**
@@ -121,9 +153,20 @@ class ProductController extends Controller
      */
     public function destroy($id)
     {
-        Product::findOrFail($id)->delete();
+        try {
+            DB::beginTransaction();
 
-        return redirect()->route('products.index')
-                         ->with('success', '商品を削除しました。');
+            $product = Product::findOrFail($id);
+            $product->delete();
+
+            DB::commit();
+            return redirect()->route('products.index')
+                             ->with('success', config('message.delete_success'));
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->route('products.index')
+                             ->with('error', config('message.delete_error'));
+        }
     }
 }

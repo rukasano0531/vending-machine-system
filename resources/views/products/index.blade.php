@@ -4,117 +4,125 @@
 <div class="container mx-auto px-4 py-6">
     <h2 class="text-2xl font-bold mb-4">商品一覧</h2>
 
-    {{-- 検索フォーム --}}
-    <form method="GET" action="{{ route('products.index') }}" class="flex flex-wrap md:flex-nowrap items-center gap-4 mb-6">
-        {{-- 商品名（部分一致） --}}
-        <input
-            type="text"
-            name="keyword"
-            value="{{ old('keyword', $searchKeyword) }}"
-            placeholder="商品名で検索"
-            class="border border-gray-300 rounded px-3 py-1 w-full md:w-1/3"
-        >
-
-        {{-- メーカーセレクトボックス --}}
-        <select
-            name="company_id"
-            class="border border-gray-300 rounded px-3 py-1 w-full md:w-1/4"
-        >
+    {{-- 検索フォーム（Ajax用） --}}
+    <form id="search-form" class="flex flex-wrap md:flex-nowrap items-center gap-4 mb-6">
+        <input type="text" name="keyword" value="{{ old('keyword', $searchKeyword) }}" placeholder="商品名で検索" class="border border-gray-300 rounded px-3 py-1 w-full md:w-1/4">
+        <select name="company_id" class="border border-gray-300 rounded px-3 py-1 w-full md:w-1/4">
             <option value="">すべてのメーカー</option>
             @foreach ($companies as $company)
-                <option value="{{ $company->id }}" {{ $selectedCompany == $company->id ? 'selected' : '' }}>
-                    {{ $company->name }}
-                </option>
+                <option value="{{ $company->id }}" {{ $selectedCompany == $company->id ? 'selected' : '' }}>{{ $company->name }}</option>
             @endforeach
         </select>
-
-        {{-- 検索ボタン --}}
-        <button
-            type="submit"
-            class="bg-gray-700 hover:bg-gray-800 text-white px-4 py-1 rounded text-sm"
-        >
-            検索
-        </button>
+        <input type="number" name="price_min" value="{{ old('price_min', $priceMin ?? '') }}" placeholder="価格（下限）" class="border border-gray-300 rounded px-3 py-1 w-full md:w-1/6">
+        <input type="number" name="price_max" value="{{ old('price_max', $priceMax ?? '') }}" placeholder="価格（上限）" class="border border-gray-300 rounded px-3 py-1 w-full md:w-1/6">
+        <input type="number" name="stock_min" value="{{ old('stock_min', $stockMin ?? '') }}" placeholder="在庫数（下限）" class="border border-gray-300 rounded px-3 py-1 w-full md:w-1/6">
+        <input type="number" name="stock_max" value="{{ old('stock_max', $stockMax ?? '') }}" placeholder="在庫数（上限）" class="border border-gray-300 rounded px-3 py-1 w-full md:w-1/6">
+        <button type="submit" class="bg-gray-700 hover:bg-gray-800 text-white px-4 py-1 rounded text-sm">検索</button>
     </form>
+
+    {{-- Ajaxメッセージ表示用 --}}
+    <div id="ajax-message-area" class="mb-4"></div>
 
     {{-- 新規登録ボタン --}}
     <div class="flex justify-end mb-4">
-        <a
-            href="{{ route('products.create') }}"
-            class="bg-orange-500 hover:bg-orange-600 px-4 py-2 rounded text-sm font-medium text-black"
-        >
-            新規登録
-        </a>
+        <a href="{{ route('products.create') }}" class="bg-orange-500 hover:bg-orange-600 px-4 py-2 rounded text-sm font-medium text-black">新規登録</a>
     </div>
 
     {{-- 商品一覧テーブル --}}
-    <div class="overflow-x-auto">
-        <table class="min-w-full bg-white border border-gray-200">
-            <thead class="bg-gray-100">
-                <tr>
-                    <th class="px-4 py-2 border">ID</th>
-                    <th class="px-4 py-2 border">商品画像</th>
-                    <th class="px-4 py-2 border">商品名</th>
-                    <th class="px-4 py-2 border">価格</th>
-                    <th class="px-4 py-2 border">在庫数</th>
-                    <th class="px-4 py-2 border">メーカー</th>
-                    <th class="px-4 py-2 border">操作</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach ($products as $product)
-                <tr class="text-center">
-                    <td class="px-4 py-2 border">{{ $product->id }}</td>
-                    <td class="px-4 py-2 border">
-                        @if ($product->image)
-                            <img src="{{ asset('storage/' . $product->image) }}" alt="商品画像" class="w-20 h-auto mx-auto">
-                        @else
-                            画像なし
-                        @endif
-                    </td>
-                    <td class="px-4 py-2 border">{{ $product->name }}</td>
-                    <td class="px-4 py-2 border">¥{{ number_format($product->price) }}</td>
-                    <td class="px-4 py-2 border">{{ $product->stock }}</td>
-                    <td class="px-4 py-2 border">{{ $product->company->name }}</td>
-                    <td class="px-4 py-2 border">
-                        <div class="flex justify-center space-x-2">
-                            <a
-                                href="{{ route('products.show', $product->id) }}"
-                                class="bg-sky-300 hover:bg-sky-400 px-3 py-1 rounded text-sm font-medium text-black"
-                            >
-                                詳細
-                            </a>
-                            <a
-                                href="{{ route('products.edit', $product->id) }}"
-                                class="bg-yellow-300 hover:bg-yellow-400 px-3 py-1 rounded text-sm font-medium text-black"
-                            >
-                                編集
-                            </a>
-                            <form
-                                action="{{ route('products.destroy', $product->id) }}"
-                                method="POST"
-                                onsubmit="return confirm('本当に削除しますか？');"
-                            >
-                                @csrf
-                                @method('DELETE')
-                                <button
-                                    type="submit"
-                                    class="bg-red-500 hover:bg-red-600 px-3 py-1 rounded text-sm font-medium text-white"
-                                >
-                                    削除
-                                </button>
-                            </form>
-                        </div>
-                    </td>
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
+    <div id="product-list">
+        @include('products.partials.list', ['products' => $products])
     </div>
 
-    {{-- ページネーション（必要に応じて） --}}
+    {{-- ページネーション --}}
     <div class="mt-6">
         {{ $products->links() }}
     </div>
 </div>
 @endsection
+
+@push('scripts')
+    {{-- jQuery：tablesorterより前に必ず読み込む --}}
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    {{-- tablesorter CDN --}}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.31.3/css/theme.default.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.31.3/js/jquery.tablesorter.min.js"></script>
+
+    {{-- CSRFトークン --}}
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
+    <script>
+    $(function () {
+        function initializeTable() {
+            if ($.fn.tablesorter) {
+                $("#sortable-table").tablesorter({
+                    sortList: [[0, 1]]
+                });
+            } else {
+                console.warn("tablesorterがロードされていません");
+            }
+        }
+
+        function bindDeleteEvents() {
+            $('.delete-button').off('click').on('click', function () {
+                if (!confirm('本当に削除しますか？')) return;
+
+                const productId = $(this).data('id');
+                const row = $('#product-row-' + productId);
+                const baseUrl = "{{ url('') }}";
+
+                $.ajax({
+                    url: `${baseUrl}/products/${productId}`,
+                    type: 'POST',
+                    data: {
+                        _method: 'DELETE',
+                        _token: $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function () {
+                        row.fadeOut(300, function () {
+                            $(this).remove();
+                        });
+                        $('#ajax-message-area').html('<div class="flash-message p-4 mb-4 bg-green-100 text-green-800 border border-green-300 rounded">{{ config('message.delete_success') }}</div>');
+                        setTimeout(() => $('.flash-message').fadeOut('slow'), 3000);
+                    },
+                    error: function (xhr) {
+                        alert('削除に失敗しました');
+                    }
+                });
+            });
+        }
+
+        initializeTable();
+        bindDeleteEvents();
+
+        $('#search-form').on('submit', function (e) {
+            e.preventDefault();
+            const formData = $(this).serialize();
+
+            $.ajax({
+                url: "{{ route('products.index') }}",
+                type: 'GET',
+                data: formData,
+                dataType: 'html',
+                success: function (response) {
+                    const newTable = $(response).find('#product-list').html();
+                    $('#product-list').html(newTable);
+                    initializeTable();
+                    bindDeleteEvents();
+
+                    const errorMessage = $(response).find('.flash-message').text();
+                    if (errorMessage) {
+                        $('#ajax-message-area').html(
+                            `<div class="flash-message p-4 mb-4 bg-red-100 text-red-800 border border-red-300 rounded">${errorMessage}</div>`
+                        );
+                        setTimeout(() => $('.flash-message').fadeOut('slow'), 3000);
+                    }
+                },
+                error: function () {
+                    alert('検索に失敗しました');
+                }
+            });
+        });
+    });
+    </script>
+@endpush
