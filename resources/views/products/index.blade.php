@@ -4,6 +4,19 @@
 <div class="container mx-auto px-4 py-6">
     <h2 class="text-2xl font-bold mb-4">商品一覧</h2>
 
+    {{-- フラッシュメッセージ --}}
+    @if(session('success'))
+        <div class="flash-message p-4 mb-4 bg-green-100 text-green-800 border border-green-300 rounded">
+            {{ session('success') }}
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="flash-message p-4 mb-4 bg-red-100 text-red-800 border border-red-300 rounded">
+            {{ session('error') }}
+        </div>
+    @endif
+
     {{-- 検索フォーム（Ajax用） --}}
     <form id="search-form" class="flex flex-wrap md:flex-nowrap items-center gap-4 mb-6">
         <input type="text" name="keyword" value="{{ old('keyword', $searchKeyword) }}" placeholder="商品名で検索" class="border border-gray-300 rounded px-3 py-1 w-full md:w-1/4">
@@ -33,6 +46,13 @@
         @include('products.partials.list', ['products' => $products])
     </div>
 
+    {{-- 検索結果が空のときだけエラーメッセージ表示 --}}
+    @if(request()->hasAny(['keyword', 'company_id', 'price_min', 'price_max', 'stock_min', 'stock_max']) && $products->isEmpty())
+        <div id="no-results-message" class="mt-4 text-red-600 font-semibold">
+            該当する商品は見つかりませんでした。
+        </div>
+    @endif
+
     {{-- ページネーション --}}
     <div class="mt-6">
         {{ $products->links() }}
@@ -41,14 +61,9 @@
 @endsection
 
 @push('scripts')
-    {{-- jQuery：tablesorterより前に必ず読み込む --}}
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
-    {{-- tablesorter CDN --}}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.31.3/css/theme.default.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.31.3/js/jquery.tablesorter.min.js"></script>
-
-    {{-- CSRFトークン --}}
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <script>
@@ -110,10 +125,18 @@
                     initializeTable();
                     bindDeleteEvents();
 
-                    const errorMessage = $(response).find('.flash-message').text();
-                    if (errorMessage) {
+                    const flashMessage = $(response).find('.flash-message').text();
+                    if (flashMessage) {
                         $('#ajax-message-area').html(
-                            `<div class="flash-message p-4 mb-4 bg-red-100 text-red-800 border border-red-300 rounded">${errorMessage}</div>`
+                            `<div class="flash-message p-4 mb-4 bg-red-100 text-red-800 border border-red-300 rounded">${flashMessage}</div>`
+                        );
+                        setTimeout(() => $('.flash-message').fadeOut('slow'), 3000);
+                    }
+
+                    const noResults = $(response).find('#no-results-message').html();
+                    if (noResults) {
+                        $('#ajax-message-area').html(
+                            `<div class="p-4 mb-4 bg-red-100 text-red-800 border border-red-300 rounded">${noResults}</div>`
                         );
                         setTimeout(() => $('.flash-message').fadeOut('slow'), 3000);
                     }

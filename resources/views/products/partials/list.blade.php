@@ -11,7 +11,7 @@
         </tr>
     </thead>
     <tbody>
-        @forelse ($products as $product)
+        @foreach ($products as $product)
         <tr id="product-row-{{ $product->id }}" class="text-center">
             <td class="px-4 py-2 border">{{ $product->id }}</td>
             <td class="px-4 py-2 border">
@@ -39,14 +39,6 @@
                 </div>
             </td>
         </tr>
-        @empty
-        <tr>
-            <td colspan="7" class="text-center py-6">
-                <div class="bg-red-100 text-red-700 border border-red-300 rounded px-4 py-3 inline-block">
-                    {{ config('message.no_data') }}
-                </div>
-            </td>
-        </tr>
-        @endforelse
+        @endforeach
     </tbody>
 </table>

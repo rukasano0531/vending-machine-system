@@ -21,6 +21,15 @@ class ProductController extends Controller
         $stockMin        = $request->input('stock_min');
         $stockMax        = $request->input('stock_max');
 
+        // 🔽 1つでも検索条件があれば true（空文字も考慮）
+        $isSearch = $request->hasAny([
+            'keyword', 'company_id', 'price_min', 'price_max', 'stock_min', 'stock_max'
+        ]) && collect([
+            $searchKeyword, $selectedCompany, $priceMin, $priceMax, $stockMin, $stockMax
+        ])->filter(function ($val) {
+            return $val !== null && $val !== '';
+        })->isNotEmpty();
+
         $products = Product::search(
             $searchKeyword,
             $selectedCompany,
@@ -30,7 +39,8 @@ class ProductController extends Controller
             $stockMax
         )->paginate(10)->appends($request->except('page'));
 
-        if ($products->isEmpty()) {
+        // 🔽 検索された上で0件の場合のみメッセージ
+        if ($isSearch && $products->isEmpty()) {
             \Session::flash('error', config('message.not_found'));
         }
 
