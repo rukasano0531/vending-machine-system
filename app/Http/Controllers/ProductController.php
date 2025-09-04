@@ -10,7 +10,7 @@ use App\Models\Company;
 class ProductController extends Controller
 {
     /**
-     * 商品一覧表示（検索対応）
+     * 商品一覧表示（検索対応 + 非同期対応）
      */
     public function index(Request $request)
     {
@@ -21,7 +21,7 @@ class ProductController extends Controller
         $stockMin        = $request->input('stock_min');
         $stockMax        = $request->input('stock_max');
 
-        // 🔽 1つでも検索条件があれば true（空文字も考慮）
+        // 検索条件が指定されたか判定
         $isSearch = $request->hasAny([
             'keyword', 'company_id', 'price_min', 'price_max', 'stock_min', 'stock_max'
         ]) && collect([
@@ -30,6 +30,7 @@ class ProductController extends Controller
             return $val !== null && $val !== '';
         })->isNotEmpty();
 
+        // 検索処理
         $products = Product::search(
             $searchKeyword,
             $selectedCompany,
@@ -37,13 +38,29 @@ class ProductController extends Controller
             $priceMax,
             $stockMin,
             $stockMax
-        )->paginate(10)->appends($request->except('page'));
+        )
+        ->with('company')
+        ->paginate(10)
+        ->appends($request->except('page'));
 
-        // 🔽 検索された上で0件の場合のみメッセージ
+        // 検索で0件の場合のみエラーメッセージ
         if ($isSearch && $products->isEmpty()) {
             \Session::flash('error', config('message.not_found'));
         }
 
+        // AjaxリクエストならJSONを返す
+        if ($request->ajax()) {
+            return response()->json([
+                'status'   => 'success',
+                'data'     => $products->items(),  // 商品リスト（配列化されたもの）
+                'total'    => $products->total(),
+                'per_page' => $products->perPage(),
+                'current_page' => $products->currentPage(),
+                'last_page'    => $products->lastPage(),
+            ]);
+        }
+
+        // 通常の画面表示
         $companies = Company::all();
 
         return view('products.index', compact(
@@ -92,9 +109,9 @@ class ProductController extends Controller
             Product::create($validated);
 
             DB::commit();
+
             return redirect()->route('products.index')
                              ->with('success', config('message.create_success'));
-
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->route('products.index')
@@ -148,9 +165,9 @@ class ProductController extends Controller
             $product->update($validated);
 
             DB::commit();
+
             return redirect()->route('products.index')
                              ->with('success', config('message.update_success'));
-
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->route('products.index')
@@ -159,9 +176,9 @@ class ProductController extends Controller
     }
 
     /**
-     * 商品削除処理
+     * 商品削除処理（非同期対応）
      */
-    public function destroy($id)
+    public function destroy($id, Request $request)
     {
         try {
             DB::beginTransaction();
@@ -170,11 +187,27 @@ class ProductController extends Controller
             $product->delete();
 
             DB::commit();
+
+            // AjaxリクエストならJSONを返す
+            if ($request->ajax()) {
+                return response()->json([
+                    'status'  => 'success',
+                    'message' => config('message.delete_success'),
+                ]);
+            }
+
             return redirect()->route('products.index')
                              ->with('success', config('message.delete_success'));
-
         } catch (\Exception $e) {
             DB::rollBack();
+
+            if ($request->ajax()) {
+                return response()->json([
+                    'status'  => 'error',
+                    'message' => config('message.delete_error'),
+                ], 500);
+            }
+
             return redirect()->route('products.index')
                              ->with('error', config('message.delete_error'));
         }
